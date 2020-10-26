@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['gui.py'],
-             pathex=['C:\\Users\\voka\\!PY\\gui\\Tkinter\\molp gui'],
+             pathex=['<path to project directory>'],
              binaries=[],
              datas=[],
              hiddenimports=["pywt","pywt._estentions._cwt"],
