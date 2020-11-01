@@ -1,11 +1,13 @@
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
+from tkinter import font
 
 
 from gurobipy import *
 
 import time
+import ntpath
 
 from file import *
 
@@ -13,15 +15,17 @@ from file import *
 fix_dependencies()
 
 root = Tk()
-root.title("MOLP")
+root.title("Idol")
 root.iconbitmap('favicon.ico')
-root.geometry("400x400")
+root.geometry("500x500")
 
 root.ystar = {}
 WRKDIR = "wrkdir"
 
 lbl_text = StringVar()
 lbl_text.set("No file has been loaded")
+
+gui_font = font.Font(family='Helvetica', size=12)
 
 
 def get_obj_num(model):
@@ -103,11 +107,16 @@ def constr_copy(model, mo, varDict):
     mo.update()
 
 
-def save_model(model, name):
+def save_model(model, name, type):
     make_dir()
     timestr = time.strftime("%Y%m%d-%H%M%S")
 
-    file_path = WRKDIR + name + timestr + ".lp"
+    if type == 'input':
+        file_path = WRKDIR + "\\" + ntpath.basename(name)
+    elif type == 'ch':
+        file_path = WRKDIR + "\\Chebyshev_" + ntpath.basename(name)
+
+
     model.write(file_path)
     return file_path
 
@@ -115,7 +124,7 @@ def save_model(model, name):
 def save_file(filename):
     try:
         model = read(filename)
-        root.model_path = save_model(model, "/multi_")
+        root.model_path = save_model(model, filename, 'input')
 
     except GurobiError as e:
         print('Error code ' + str(e.errno) + ': ' + str(e))
@@ -136,7 +145,7 @@ def load_file():
         return
 
     try:
-        lbl_text.set(root.model_path)
+        lbl_text.set("File is loaded: " + root.model_path)
     except Exception as e:
         messagebox.showwarning("Error", "File is not loaded")
         print('Error: ' + str(e))
@@ -203,7 +212,11 @@ def load_weights():
         return
 
     try:
-        lbl_text.set(root.weights)
+        lbl = ''
+        for i in root.weights:
+            lbl = lbl + str(i) + '  '
+
+        lbl_text.set("Weights are loaded: " + lbl)
     except Exception as e:
         messagebox.showwarning("Error", "Weights are not loaded")
         print('Error: ' + str(e))
@@ -248,9 +261,9 @@ def gen_chebyshev():
         # set objective
         mo.setObjective(varDict['s'], GRB.MINIMIZE)
 
-        root.ch_path = save_model(mo, "/chebyshev_")
+        root.ch_path = save_model(mo, root.model_path, 'ch')
 
-        lbl_text.set("chebyshev scalarization file: " + root.ch_path)
+        lbl_text.set("Chebyshev scalarization file: " + root.ch_path)
         print("Chebyshev scalarization is done!")
 
     except Exception as e:
@@ -275,20 +288,26 @@ def optimize():
 
 load_btn = Button(root, text="Load File", padx=400, pady=25, command=load_file)
 load_btn.pack()
+load_btn['font'] = gui_font
 
 ref_btn = Button(root, text="Generate Reference Point", padx=400, pady=25, command=gen_reference)
 ref_btn.pack()
+ref_btn['font'] = gui_font
 
 wght_btn = Button(root, text="Load Weights", padx=400, pady=25, command=load_weights)
 wght_btn.pack()
+wght_btn['font'] = gui_font
 
 gen_btn = Button(root, text="Generate Chebyshev Scalarization", padx=400, pady=25, command=gen_chebyshev)
 gen_btn.pack()
+gen_btn['font'] = gui_font
 
 opt_btn = Button(root, text="Optimize Chebyshev Scalarization", padx=400, pady=25, command=optimize)
 opt_btn.pack()
+opt_btn['font'] = gui_font
 
-file_lbl = Label(root, textvariable=lbl_text)
+file_lbl = Message(root, textvariable=lbl_text, width=420)
 file_lbl.pack()
+file_lbl['font'] = gui_font
 
 root.mainloop()
